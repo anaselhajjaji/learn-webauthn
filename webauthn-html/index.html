@@ -24,5 +24,6 @@ body {
 <!-- Step 2: -->
 <p>After registration has finished, the user can now be authenticated. During authentication an assertion is created, which is proof that the user has possession of the private key. This assertion contains a signature created using the private key. The server uses the public key retrieved during registration to verify this signature.</p>
 <input id="authenticate" type="button" value="2. Authenticate" onclick="authenticate();" />
+<div id="authResult"></div>
 </body>
 </html>

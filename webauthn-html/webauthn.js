@@ -290,6 +290,8 @@ async function authenticate() {
         }
     
     */
+    const authResultDiv = document.getElementById('authResult');
+    authResultDiv.innerHTML =   '<p><b>Auth Success!!</b></p>';
 }
 
 // Utils
