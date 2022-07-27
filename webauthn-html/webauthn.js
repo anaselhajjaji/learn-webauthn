@@ -1,7 +1,7 @@
 // STEP 1
 // The server would begin creating a new credential by calling 
 // navigator.credentials.create() on the client
-async function createCredentials() {
+async function registerCredentials() {
     var randomStringFromServer = 'I am a random string generated from server';
     
     const publicKeyCredentialCreationOptions = {
@@ -105,8 +105,74 @@ async function createCredentials() {
     const clientDataObj = JSON.parse(decodedClientData);
     console.log(clientDataObj)
     
+    // attestationObject
+    /*
+        {
+            // authData: The authenticator data is here is a byte array that contains metadata about the registration event, 
+            // as well as the public key we will use for future authentications. 
+            // Read the spec: https://w3c.github.io/webauthn/#authenticator-data
+            authData: Uint8Array(196),
+            // fmt: This represents the attestation format. Authenticators can provide attestation data in a number of ways; 
+            // this indicates how the server should parse and validate the attestation data. 
+            // Read the spec: https://w3c.github.io/webauthn/#attestation-statement-format
+            fmt: "fido-u2f",
+            // attStmt: This is the attestation statement. This object will look different depending on the attestation format indicated. 
+            // In this case, we are given a signature sig and attestation certificate x5c. 
+            // Servers use this data to cryptographically verify the credential public key came from the authenticator. 
+            // Additionally, servers can use the certificate to reject authenticators that are believed to be weak. 
+            // Read the spec: https://w3c.github.io/webauthn/#attestation-statement
+            attStmt: {
+                sig: Uint8Array(70),
+                x5c: Array(1),
+            },
+        }
+    */
+    const decodedAttestationObj = CBOR.decode(
+        credential.response.attestationObject);
+    console.log('decodedAttestationObj');
+    console.log(decodedAttestationObj);
+
+    // Parsing
+    // The authData is a byte array described in the spec. Parsing it will involve slicing bytes from the array and converting them into usable objects.
+    const {authData} = decodedAttestationObj;
+
+    // get the length of the credential ID
+    const dataView = new DataView(
+        new ArrayBuffer(2));
+    const idLenBytes = authData.slice(53, 55);
+    idLenBytes.forEach(
+        (value, index) => dataView.setUint8(
+            index, value));
+    const credentialIdLength = dataView.getUint16();
+
+    // get the credential ID
+    const credentialId = authData.slice(
+        55, 55 + credentialIdLength);
+
+    // get the public key object
+    const publicKeyBytes = authData.slice(
+        55 + credentialIdLength);
+
+    // the publicKeyBytes are encoded again as CBOR
+    /*
+    The publicKeyObject retrieved at the end is an object encoded in a standard called COSE, 
+    which is a concise way to describe the credential public key and the metadata needed to use it.
+
+    1: The 1 field describes the key type. The value of 2 indicates that the key type is in the Elliptic Curve format.
+    3: The 3 field describes the algorithm used to generate authentication signatures. The -7 value indicates this authenticator will be using ES256.
+    -1: The -1 field describes this key's "curve type". The value 1 indicates the that this key uses the "P-256" curve.
+    -2: The -2 field describes the x-coordinate of this public key.
+    -3: The -3 field describes the y-coordinate of this public key.
+    */
+    const publicKeyObject = CBOR.decode(
+        publicKeyBytes.buffer);
+    console.log('publicKeyObject');
+    console.log(publicKeyObject);
+
+    // END: If the validation process succeeded, the server would then store the publicKeyBytes and credentialId in a database, associated with the user.
+
     // Display in screen
     credentialDiv.innerHTML =   '<p><b>Credential ID:</b> ' + credential.id + '</p>' +
                                 '<p><b>clientDataJSON:</b> ' + decodedClientData + '</p>' + 
-                                '<p><b>attestationObject (base64):</b> ' + btoa(credential.response.attestationObject) + '</p>';
+                                '<p><b>attestationObject (base64):</b>  see developer console (publicKeyObject) </p>';
 }

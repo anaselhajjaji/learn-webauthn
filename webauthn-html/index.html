@@ -4,6 +4,7 @@
 <title>Webauthn Example</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="libs/cbor.js"></script>
 <script src="webauthn.js"></script>
 <style>
 body {
@@ -17,7 +18,7 @@ body {
 
 <!-- Step 1: Credential Creation -->
 <p>The server would begin creating a new credential by calling navigator.credentials.create() on the client.</p>
-<input id="create-cred" type="button" value="1. Create and Validate Credential" onclick="createCredentials();" />
+<input id="create-cred" type="button" value="1. Create and Validate Credential" onclick="registerCredentials();" />
 <div id="credential"></div>
 
 <!-- Step 2: -->
