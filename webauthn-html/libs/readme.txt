@@ -1,1 +1,0 @@
-cbor.js: https://raw.githubusercontent.com/paroga/cbor-js/v0.1.0/cbor.js
