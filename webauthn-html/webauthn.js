@@ -105,9 +105,7 @@ async function createCredentials() {
     const clientDataObj = JSON.parse(decodedClientData);
     console.log(clientDataObj)
     
-    
-    
-    
+    // Display in screen
     credentialDiv.innerHTML =   '<p><b>Credential ID:</b> ' + credential.id + '</p>' +
                                 '<p><b>clientDataJSON:</b> ' + decodedClientData + '</p>' + 
                                 '<p><b>attestationObject (base64):</b> ' + btoa(credential.response.attestationObject) + '</p>';
