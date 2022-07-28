@@ -3,18 +3,21 @@
 async function registerCredentials() {
     var randomStringFromServer = 'I am a random string generated from server';
     
+    // Parameters that we'll provide to: navigator.credentials.create()
     const publicKeyCredentialCreationOptions = {
         // challenge: The challenge is a buffer of cryptographically random bytes generated on the server, and is needed to prevent "replay attacks". 
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-challenge
         challenge: Uint8Array.from(
             randomStringFromServer, c => c.charCodeAt(0)),
+        
         // rp: This stands for “relying party”; it can be considered as describing the organization responsible for registering and authenticating the user. 
-        // The id must be a subset of the domain currently in the browser. For example, a valid id for this page is webauthn.guide. 
+        // The id must be a subset of the domain currently in the browser.
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-rp
         rp: {
             name: "Anas Localhost",
             id: "localhost", // To make the example work on localhost, otherwise it should be: something.com
         },
+
         // user: This is information about the user currently registering. The authenticator uses the id to associate a credential with the user. 
         // It is suggested to not use personally identifying information as the id, as it may be stored in an authenticator. 
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-user
@@ -22,8 +25,9 @@ async function registerCredentials() {
             id: Uint8Array.from(
                 "THE_ID_OF_ANAS_USER", c => c.charCodeAt(0)),
             name: "anas@elhajjaji.com",
-            displayName: "Anas",
+            displayName: "Anas EL HAJJAJI",
         },
+        
         // pubKeyCredParams: This is an array of objects describing what public key types are acceptable to a server. 
         // The alg is a number described in the COSE registry; for example, -7 indicates that the server accepts Elliptic Curve public keys 
         // using a SHA-256 signature algorithm. 
