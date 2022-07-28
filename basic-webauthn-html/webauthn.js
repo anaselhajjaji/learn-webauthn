@@ -242,7 +242,7 @@ async function authenticate() {
         challenge: Uint8Array.from(
             randomStringFromServer, c => c.charCodeAt(0)),
         
-            // allowCredentials: This array tells the browser which credentials the server would like the user to authenticate with. 
+        // allowCredentials: This array tells the browser which credentials the server would like the user to authenticate with. 
         // The credentialId retrieved and saved during registration is passed in here. The server can optionally indicate what transports it prefers, 
         // like USB, NFC, and Bluetooth. 
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialrequestoptions-allowcredentials
