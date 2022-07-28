@@ -27,12 +27,16 @@ async function registerCredentials() {
             name: "anas@elhajjaji.com",
             displayName: "Anas EL HAJJAJI",
         },
-        
+
         // pubKeyCredParams: This is an array of objects describing what public key types are acceptable to a server. 
         // The alg is a number described in the COSE registry; for example, -7 indicates that the server accepts Elliptic Curve public keys 
         // using a SHA-256 signature algorithm. 
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-pubkeycredparams
-        pubKeyCredParams: [{alg: -7, type: "public-key"},{alg: -257, type: "public-key"}],
+        pubKeyCredParams: [
+            { type: "public-key", alg: -8 },
+            { type: "public-key", alg: -7 }
+        ],
+
         // authenticatorSelection: This optional object helps relying parties make further restrictions on the type of authenticators allowed for registration. 
         // If we use "cross-platform" it'll indicate that we want to register a cross-platform authenticator (like a Yubikey) instead of a platform authenticator like Windows Hello or Touch ID. 
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-authenticatorselection
