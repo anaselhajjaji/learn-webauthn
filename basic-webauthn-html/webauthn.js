@@ -1,6 +1,14 @@
 // STEP 1
 // In this step, the server will create a new credential by calling navigator.credentials.create() on the client side
 async function registerCredentials() {
+    
+    /* -----------------------------------
+
+            CREATE CREDENTIALS
+
+       -----------------------------------*/
+    console.log("STEP 1: Register, create and validate the credentials");
+    
     var randomStringFromServer = 'I am a random string generated from server';
     
     // Parameters that we'll provide to: navigator.credentials.create()
@@ -42,6 +50,7 @@ async function registerCredentials() {
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-authenticatorselection
         authenticatorSelection: {
             authenticatorAttachment: 'platform',
+            requireResidentKey: true,
             userVerification: 'required'
         },
         excludeCredentials: [],
@@ -54,24 +63,48 @@ async function registerCredentials() {
         // A value of "indirect" means that the server will allow for anonymized attestation data. 
         // direct means that the server wishes to receive the attestation data from the authenticator. 
         // Spec Documentation: https://w3c.github.io/webauthn/#attestation-conveyance
-        attestation: "none"
+        attestation: "direct"
     };
+
+    console.log('-------- publicKeyCredentialCreationOptions', publicKeyCredentialCreationOptions);
     
-    /* The credential object returned from the create() call is an object containing the public key and other attributes used to validate the registration event.
+    const credential = await navigator.credentials.create({
+        publicKey: publicKeyCredentialCreationOptions
+    });
+
+    /* -----------------------------------
+
+            PARSING AND VALIDATING THE 
+            REGISTRATION DATA
+
+    -----------------------------------*/
+
+    /*  The credential object returned from the create() call is an object containing the public key 
+        and other attributes used to validate the registration event.
+
+        After the PublicKeyCredential has been obtained, it is sent to the server for validation. 
+        The WebAuthn specification describes a 19-point procedure to validate the registration data (https://w3c.github.io/webauthn/#registering-a-new-credential); 
+        Examples: 
+            - Python (https://github.com/duo-labs/py_webauthn)
+            - Go (https://github.com/duo-labs/webauthn).
         
         PublicKeyCredential {
             // id: The ID for the newly generated credential; 
             // it will be used to identify the credential when authenticating the user. 
-            // The ID is provided here as a base64-encoded string. Spec Documentation: https://w3c.github.io/webauthn/#ref-for-dom-credential-id
-            id: 'ADSUllKQmbqdGtpu4sjseh4cg2TxSvrbcHDTBsv4NSSX9...',
+            // The ID is provided here as a base64-encoded string. 
+            // Spec Documentation: https://w3c.github.io/webauthn/#ref-for-dom-credential-id
+            id: 'y0e6uqqj1KJWJW1xFgriHaF1NIeL_dIpvvK_gjL1jKwzpmjuTc6dOY0yv8RxQ4DLni8bLqJ-H9nd1k3R6RrEVp3VnjEp5aZjLs00C1fBgCttKhvHUQ',
+            
             // rawId: The ID again, but in binary form. 
             // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredential-rawid
             rawId: ArrayBuffer(59),
+            
             response: AuthenticatorAttestationResponse {
                 // clientDataJSON: This represents data passed from the browser to the authenticator in order to associate the new credential with the server and browser. 
                 // The authenticator provides it as a UTF-8 byte array. 
                 // Spec Documentation: https://w3c.github.io/webauthn/#dictdef-collectedclientdata
                 clientDataJSON: ArrayBuffer(121),
+                
                 // attestationObject: This object contains the credential public key, an optional attestation certificate, 
                 // and other metadata used also to validate the registration event. It is binary data encoded in CBOR. 
                 // Spec Documentation: https://w3c.github.io/webauthn/#dom-authenticatorattestationresponse-attestationobject
@@ -80,19 +113,6 @@ async function registerCredentials() {
             type: 'public-key'
         }
     */
-   console.log('publicKeyCredentialCreationOptions');
-   console.log(publicKeyCredentialCreationOptions);
-    const credential = await navigator.credentials.create({
-        publicKey: publicKeyCredentialCreationOptions
-    });
-
-    const credentialDiv = document.getElementById('credential');
-
-    // Parsing and validating the registration data
-    // After the PublicKeyCredential has been obtained, it is sent to the server for validation. 
-    // The WebAuthn specification describes a 19-point procedure to validate the registration data (https://w3c.github.io/webauthn/#registering-a-new-credential); 
-    // what this looks like will vary depending on the language your server software is written in. 
-    // Duo Labs has provided full example projects implementing WebAuthn written in Python (https://github.com/duo-labs/py_webauthn) and Go (https://github.com/duo-labs/webauthn).
     
     // clientDataJSON
     // The clientDataJSON is parsed by converting the UTF-8 byte array provided by the authenticator into a JSON-parsable string. 
@@ -101,9 +121,11 @@ async function registerCredentials() {
         {
             // challenge: This is the same challenge that was passed into the create() call. 
             // The server must validate that this returned challenge matches the one generated for this registration event.
-            challenge: "p5aV2uHXr0AOqUk7HQitvi-Ny1....",
+            challenge: "SSBhbSBhIHJhbmRvbSBzdHJpbmcgZ2VuZXJhdGVkIGZyb20gc2VydmVy",
+            
             // origin: The server must validate that this "origin" string matches up with the origin of the application.
-            origin: "https://webauthn.guide",
+            origin: "http://localhost",
+            
             // type: The server validates that this string is in fact "webauthn.create". If another string is provided, 
             // it indicates that the authenticator performed an incorrect operation.
             type: "webauthn.create"
@@ -114,7 +136,7 @@ async function registerCredentials() {
     const decodedClientData = utf8Decoder.decode(credential.response.clientDataJSON)
     // parse the string as an object
     const clientDataObj = JSON.parse(decodedClientData);
-    console.log(clientDataObj)
+    console.log("-------- clientDataJSON", clientDataObj);
     
     // attestationObject
     /*
@@ -123,10 +145,12 @@ async function registerCredentials() {
             // as well as the public key we will use for future authentications. 
             // Spec Documentation: https://w3c.github.io/webauthn/#authenticator-data
             authData: Uint8Array(196),
+            
             // fmt: This represents the attestation format. Authenticators can provide attestation data in a number of ways; 
             // this indicates how the server should parse and validate the attestation data. 
             // Spec Documentation: https://w3c.github.io/webauthn/#attestation-statement-format
-            fmt: "fido-u2f",
+            fmt: "packed",
+            
             // attStmt: This is the attestation statement. This object will look different depending on the attestation format indicated. 
             // In this case, we are given a signature sig and attestation certificate x5c. 
             // Servers use this data to cryptographically verify the credential public key came from the authenticator. 
@@ -140,11 +164,11 @@ async function registerCredentials() {
     */
     const decodedAttestationObj = CBOR.decode(
         credential.response.attestationObject);
-    console.log('decodedAttestationObj');
-    console.log(decodedAttestationObj);
-
+    console.log('-------- attestationObject', decodedAttestationObj);
+    
     // Parsing
-    // The authData is a byte array described in the spec. Parsing it will involve slicing bytes from the array and converting them into usable objects.
+    // The authData is a byte array described in the spec. 
+    // Parsing it will involve slicing bytes from the array and converting them into usable objects.
     const {authData} = decodedAttestationObj;
 
     // get the length of the credential ID
@@ -177,13 +201,14 @@ async function registerCredentials() {
     */
     const publicKeyObject = CBOR.decode(
         publicKeyBytes.buffer);
-    console.log('publicKeyObject');
-    console.log(publicKeyObject);
-
-    // END: If the validation process succeeded, the server would then store the publicKeyBytes and credentialId in a database, associated with the user.
+    console.log('-------- publicKeyObject', publicKeyObject);
+    
+    // END: If the validation process succeeded, the server would then store the publicKeyBytes 
+    // and credentialId in a database, associated with the user.
     localStorage.setItem('credId', credential.id);
 
     // Display in screen
+    const credentialDiv = document.getElementById('credential');
     credentialDiv.innerHTML =   '<p><b>Credential ID:</b> ' + credential.id + '</p>' +
                                 '<p><b>clientDataJSON:</b> ' + decodedClientData + '</p>' + 
                                 '<p><b>attestationObject (base64):</b>  see developer console (publicKeyObject) </p>';
@@ -194,24 +219,30 @@ async function registerCredentials() {
 // which is proof that the user has possession of the private key. This assertion contains a signature created using the private key. 
 // The server uses the public key retrieved during registration to verify this signature.
 async function authenticate() {
-    var randomStringFromServer = 'I am a random string generated from server';
+    console.log("STEP 2: Authentication");
+    
     const credentialId = localStorage.getItem('credId');
-    console.log('credential id: ' + credentialId);
+    console.log('credential id', credentialId);
     
     // During authentication the user proves that they own the private key they registered with. 
     // They do so by providing an assertion, which is generated by calling navigator.credentials.get() on the client. 
     // This will retrieve the credential generated during registration with a signature included.
+    var randomStringFromServer = 'I am a random string generated from server';
+    
     const publicKeyCredentialRequestOptions = {
         authenticatorSelection: {
             authenticatorAttachment: "platform",
             requireResidentKey: true,
         },
+        
         rpId: "localhost", // To make the example work on localhost, otherwise it should be: something.com
+        
         // challenge: Like during registration, this must be cryptographically random bytes generated on the server. 
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialrequestoptions-challenge
         challenge: Uint8Array.from(
             randomStringFromServer, c => c.charCodeAt(0)),
-        // allowCredentials: This array tells the browser which credentials the server would like the user to authenticate with. 
+        
+            // allowCredentials: This array tells the browser which credentials the server would like the user to authenticate with. 
         // The credentialId retrieved and saved during registration is passed in here. The server can optionally indicate what transports it prefers, 
         // like USB, NFC, and Bluetooth. 
         // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredentialrequestoptions-allowcredentials
@@ -227,36 +258,42 @@ async function authenticate() {
         timeout: 60000
     }
     
-    console.log("publicKeyCredentialRequestOptions");
-    console.log(publicKeyCredentialRequestOptions);
+    console.log("-------- publicKeyCredentialRequestOptions", publicKeyCredentialRequestOptions);
     const assertion = await navigator.credentials.get({
         publicKey: publicKeyCredentialRequestOptions
     });
+    console.log("-------- assertion", assertion);
 
-    // The assertion object returned from the get() call is again a PublicKeyCredential object. It is slightly different from the object we received during registration; 
+    // The assertion object returned from the get() call is again a PublicKeyCredential object. 
+    // It is slightly different from the object we received during registration; 
     // in particular, it includes a signature member, and does not include the public key.
     /*
         PublicKeyCredential {
             // id: The identifier for the credential that was used to generate the authentication assertion. 
             // Spec Documentation: https://w3c.github.io/webauthn/#ref-for-dom-credential-id
-            id: 'ADSUllKQmbqdGtpu4sjseh4cg2TxSvrbcHDTBsv4NSSX9...',
+            id: 'CmhTyniJPWjCWfdbzNfPHtljT4ePPgEascRYKdzlWdUK6ARoOE…QLrJB_GTDD_42bmTcqMfEqDmyeV5OcKt0pg5TBzF7EiTGA9lQ',
+            
             // rawId: The identifier again, but in binary form. 
             // Spec Documentation: https://w3c.github.io/webauthn/#dom-publickeycredential-rawid
             rawId: ArrayBuffer(59),
+            
             response: AuthenticatorAssertionResponse {
                 // authenticatorData: The authenticator data is similar to the authData received during registration, 
                 // with the notable exception that the public key is not included here. It is another item used during authentication 
                 // as source bytes to generate the assertion signature. 
                 // Spec Documentation: https://w3c.github.io/webauthn/#authenticator-data
                 authenticatorData: ArrayBuffer(191),
+                
                 // clientDataJSON: As during registration, the clientDataJSON is a collection of the data passed from the browser to the authenticator. 
                 // It is one of the items used during authentication as the source bytes to generate the signature. 
                 // Spec Documentation: https://w3c.github.io/webauthn/#dictdef-collectedclientdata
                 clientDataJSON: ArrayBuffer(118),
+                
                 // signature: The signature generated by the private key associated with this credential. On the server, 
                 // the public key will be used to verify that this signature is valid. 
                 // Spec Documentation: https://w3c.github.io/webauthn/#dom-authenticatorassertionresponse-signature
                 signature: ArrayBuffer(70),
+                
                 // userHandle: This field is optionally provided by the authenticator, and represents the user.id that was supplied during registration. 
                 // It can be used to relate this assertion to the user on the server. It is encoded here as a UTF-8 byte array. 
                 // Spec Documentation: https://w3c.github.io/webauthn/#dom-authenticatorassertionresponse-userhandle
@@ -265,9 +302,7 @@ async function authenticate() {
             type: 'public-key'
         }
     */
-    console.log("assertion");
-    console.log(assertion);
-
+    
     // Parsing and Validating the Authentication Data
     /*
         After the assertion has been obtained, it is sent to the server for validation. 
